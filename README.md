@@ -1,1 +1,5 @@
-# urfu-cake-shop-user-profile-service
+# User Profile Service
+
+## Назначение
+
+### Сервис отвечает за данные пользователя как клиента.
