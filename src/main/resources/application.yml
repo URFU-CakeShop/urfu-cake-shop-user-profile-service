@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: urfu-cake-shop-user-profile-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5434/user_profile
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+
+  liquibase:
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
+    enabled: true
+    contexts: development, production
