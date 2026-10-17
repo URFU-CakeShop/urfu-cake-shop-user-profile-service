@@ -46,8 +46,9 @@ databaseChangeLog:
                   type: TIMESTAMP
                   defaultValueComputed: CURRENT_TIMESTAMP
               - column:
-                  name: expires_at
+                  name: updated_at
                   type: TIMESTAMP
+
         - createTable:
             tableName: addresses
             columns:

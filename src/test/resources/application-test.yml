@@ -1,0 +1,14 @@
+spring.application.name=urfu-cake-shop-user-profile-service-test
+
+spring.liquibase.enabled=true
+spring.liquibase.change-log=classpath:db/changelog/db.changelog-master.yaml
+
+spring.jpa.hibernate.ddl-auto=none
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+
+logging.level.org.springframework.test=INFO
+logging.level.org.testcontainers=INFO
+logging.level.urfu.cake.shop=DEBUG
+
+jwt.secret=test-secret-key-0123456789-0123456789
