@@ -1,0 +1,43 @@
+services:
+
+  user-profile-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: user-profile-service
+    ports:
+      - "8080:8080"
+    env_file:
+      - config/notify.env
+    networks:
+      - cake-shop-network
+    depends_on:
+      db:
+        condition: service_healthy
+
+
+  db:
+    image: postgres:15-alpine
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    container_name: user-profile-service-db
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-user_profile_db}
+    ports:
+      - "5432:5432"
+    networks:
+      - cake-shop-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+
+networks:
+  cake-shop-network:
+    external: true

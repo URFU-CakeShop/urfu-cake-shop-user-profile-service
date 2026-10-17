@@ -1,4 +1,4 @@
-package com.example.urfu.cake.shop.user.profile.dto.Responce;
+package urfu.cake.shop.user.profile.dto.Responce;
 
 
 import lombok.Value;

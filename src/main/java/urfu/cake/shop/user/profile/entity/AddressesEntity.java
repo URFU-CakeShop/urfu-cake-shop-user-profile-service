@@ -1,4 +1,4 @@
-package com.example.urfu.cake.shop.user.profile.entity;
+package urfu.cake.shop.user.profile.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

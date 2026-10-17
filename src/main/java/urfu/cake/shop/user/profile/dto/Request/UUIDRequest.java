@@ -1,5 +1,6 @@
-package com.example.urfu.cake.shop.user.profile.dto.Request;
+package urfu.cake.shop.user.profile.dto.Request;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.util.UUID;
@@ -7,6 +8,7 @@ import java.util.UUID;
 @Data
 public class UUIDRequest {
 
+    @NotNull
     private UUID userUUID;
 
 }

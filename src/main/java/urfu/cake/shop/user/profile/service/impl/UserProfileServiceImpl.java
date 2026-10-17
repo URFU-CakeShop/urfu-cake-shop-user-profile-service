@@ -1,21 +1,26 @@
-package com.example.urfu.cake.shop.user.profile.service.impl;
+package urfu.cake.shop.user.profile.service.impl;
 
 
-import com.example.urfu.cake.shop.user.profile.dto.Request.UUIDRequest;
-import com.example.urfu.cake.shop.user.profile.dto.Responce.AddressResponse;
-import com.example.urfu.cake.shop.user.profile.dto.Responce.ApiResponse;
-import com.example.urfu.cake.shop.user.profile.dto.Responce.FullUserProfileResponse;
-import com.example.urfu.cake.shop.user.profile.dto.Responce.UserResponse;
-import com.example.urfu.cake.shop.user.profile.entity.AddressesEntity;
-import com.example.urfu.cake.shop.user.profile.entity.UserProfilesEntity;
-import com.example.urfu.cake.shop.user.profile.repository.UserAddressesRepository;
-import com.example.urfu.cake.shop.user.profile.repository.UserProfileRepository;
-import com.example.urfu.cake.shop.user.profile.service.UserProfilesService;
+import urfu.cake.shop.user.profile.dto.Request.CreateUserRequest;
+import urfu.cake.shop.user.profile.dto.Request.UpdateUserRequest;
+import urfu.cake.shop.user.profile.dto.Responce.AddressResponse;
+import urfu.cake.shop.user.profile.dto.Responce.ApiResponse;
+import urfu.cake.shop.user.profile.dto.Responce.FullUserProfileResponse;
+import urfu.cake.shop.user.profile.dto.Responce.UserResponse;
+import urfu.cake.shop.user.profile.entity.AddressesEntity;
+import urfu.cake.shop.user.profile.entity.UserProfilesEntity;
+import urfu.cake.shop.user.profile.exception.UserNotFoundException;
+import urfu.cake.shop.user.profile.exception.UserProfileAlreadyExistsException;
+import urfu.cake.shop.user.profile.repository.UserAddressesRepository;
+import urfu.cake.shop.user.profile.repository.UserProfileRepository;
+import urfu.cake.shop.user.profile.service.UserProfilesService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -25,37 +30,93 @@ public class UserProfileServiceImpl implements UserProfilesService {
     private final UserProfileRepository userProfileRepository;
     private final UserAddressesRepository userAddressesRepository;
 
-    public ApiResponse<UserResponse> getUserProfile(UUIDRequest request) {
-        UserProfilesEntity userProfiles = userProfileRepository.findOnlyUserByUserId(request.getUserUUID());
+    @Override
+    public ApiResponse<UserResponse> getUserProfile(UUID userUUID) {
+        UserProfilesEntity userProfiles = userProfileRepository.findOnlyUserByUserId(userUUID);
 
-        return userProfiles == null ?
-                new ApiResponse<>(false, null, "Пользователь не найден"):
-                new ApiResponse<>(true, toModel(userProfiles), "Нашлось");
+        if (userProfiles == null) {
+            throw new UserNotFoundException(userUUID);
+        }
 
+        return new ApiResponse<>(true, toModel(userProfiles), null);
     }
 
-    public ApiResponse<List<AddressResponse>> getUserAddress(UUIDRequest request){
-        List<AddressesEntity> entity = userAddressesRepository.findAllByUserProfiles_UserId(request.getUserUUID());
+    @Override
+    public ApiResponse<List<AddressResponse>> getUserAddress(UUID userUUID) {
+        List<AddressesEntity> entity = userAddressesRepository.findAllByUserProfiles_UserId(userUUID);
 
-        return (entity == null || entity.isEmpty()) ?
-                new ApiResponse<>(false, null, "Адреса еще не существует") :
-                new ApiResponse<>(true, entity.stream()
-                                                .map(this::toModel)
-                                                .toList(), "Нашлось");
+        if (entity == null || entity.isEmpty()) {
+            return new ApiResponse<>(true, List.of(), null);
+        }
+
+        return new ApiResponse<>(true, entity.stream()
+                .map(this::toModel)
+                .toList(), null);
     }
 
-    public ApiResponse<FullUserProfileResponse> getFullUserProfile(UUIDRequest request){
-        UserProfilesEntity userProfiles = userProfileRepository.findByUserId(request.getUserUUID());
+    @Override
+    public ApiResponse<FullUserProfileResponse> getFullUserProfile(UUID userUUID) {
+        UserProfilesEntity userProfiles = userProfileRepository.findByUserId(userUUID);
 
-        return userProfiles == null  ?
-                new ApiResponse<>(false, null, "Пользователь не найден"):
-                new ApiResponse<>(true, toFullModel(userProfiles), "Нашлось");
+        if (userProfiles == null) {
+            throw new UserNotFoundException(userUUID);
+        }
+
+        return new ApiResponse<>(true, toFullModel(userProfiles), null);
+    }
+
+    @Override
+    @Transactional
+    public ApiResponse<FullUserProfileResponse> updateUserProfile(UUID userUUID, UpdateUserRequest body) {
+        UserProfilesEntity entity = userProfileRepository.findByUserId(userUUID);
+
+        if (entity == null) {
+            throw new UserNotFoundException(userUUID);
+        }
+
+        entity.setFirstName(body.getFirstName());
+        entity.setLastName(body.getLastName());
+        entity.setPhone(body.getPhone());
+
+        userProfileRepository.save(entity);
+
+        return new ApiResponse<>(true, toFullModel(entity), null);
+    }
+
+    @Override
+    @Transactional
+    public ApiResponse<FullUserProfileResponse> createUserProfile(UUID userUUID, CreateUserRequest body) {
+        if (userProfileRepository.findByUserId(userUUID) != null) {
+            throw new UserProfileAlreadyExistsException(userUUID);
+        }
+
+        UserProfilesEntity entity = UserProfilesEntity.builder()
+                .userId(userUUID)
+                .firstName(body.getFirstName())
+                .lastName(body.getLastName())
+                .phone(body.getPhone())
+                .build();
+
+        userProfileRepository.save(entity);
+
+        return new ApiResponse<>(true, toFullModel(entity), null);
+    }
+
+    @Override
+    @Transactional
+    public ApiResponse<Boolean> deleteUserProfile(UUID userUUID) {
+        UserProfilesEntity entity = userProfileRepository.findByUserId(userUUID);
+
+        if (entity == null) {
+            throw new UserNotFoundException(userUUID);
+        }
+
+        userProfileRepository.delete(entity);
+        return new ApiResponse<>(true, true, null);
     }
 
 
-
-    private UserResponse toModel(UserProfilesEntity profile){
-
+    private UserResponse toModel(UserProfilesEntity profile) {
         return new UserResponse(
                 profile.getFirstName(),
                 profile.getLastName(),
@@ -65,8 +126,7 @@ public class UserProfileServiceImpl implements UserProfilesService {
         );
     }
 
-    private AddressResponse toModel(AddressesEntity addresses){
-
+    private AddressResponse toModel(AddressesEntity addresses) {
         return new AddressResponse(
                 addresses.getCity(),
                 addresses.getStreet(),
@@ -77,8 +137,8 @@ public class UserProfileServiceImpl implements UserProfilesService {
                 addresses.getCreatedAt()
         );
     }
-    private FullUserProfileResponse toFullModel(UserProfilesEntity profile){
 
+    private FullUserProfileResponse toFullModel(UserProfilesEntity profile) {
         return new FullUserProfileResponse(
                 profile.getFirstName(),
                 profile.getLastName(),

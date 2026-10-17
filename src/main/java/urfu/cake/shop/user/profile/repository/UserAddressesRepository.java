@@ -1,7 +1,7 @@
-package com.example.urfu.cake.shop.user.profile.repository;
+package urfu.cake.shop.user.profile.repository;
 
 
-import com.example.urfu.cake.shop.user.profile.entity.AddressesEntity;
+import urfu.cake.shop.user.profile.entity.AddressesEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
