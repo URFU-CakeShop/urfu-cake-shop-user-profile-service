@@ -12,8 +12,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.springframework.security.core.context.SecurityContextHolder;
 import urfu.cake.shop.user.profile.configuration.JwtConfig;
+import urfu.cake.shop.user.profile.metrics.UserProfileMetrics;
 
 import java.util.UUID;
 
@@ -34,7 +36,7 @@ class JwtAuthenticationFilterTest {
     void setUp() {
         JwtConfig jwtConfig = new JwtConfig(SECRET);
         JwtService jwtService = new JwtService(jwtConfig);
-        filter = new JwtAuthenticationFilter(jwtService);
+        filter = new JwtAuthenticationFilter(jwtService, new UserProfileMetrics(new SimpleMeterRegistry()));
         SecurityContextHolder.clearContext();
     }
 

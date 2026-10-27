@@ -20,3 +20,17 @@ spring:
 
 jwt:
   secret: ${JWT_SECRET:dev-secret-key-change-me-in-production-0123456789}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:health,info,prometheus,metrics}
+  endpoint:
+    health:
+      show-details: ${MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS:always}
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${MANAGEMENT_METRICS_TAGS_APPLICATION:urfu-cake-shop-user-profile-service}

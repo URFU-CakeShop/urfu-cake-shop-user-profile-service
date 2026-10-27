@@ -1,5 +1,6 @@
 package urfu.cake.shop.user.profile.service.impl;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,7 @@ import urfu.cake.shop.user.profile.entity.AddressesEntity;
 import urfu.cake.shop.user.profile.entity.UserProfilesEntity;
 import urfu.cake.shop.user.profile.exception.UserNotFoundException;
 import urfu.cake.shop.user.profile.exception.UserProfileAlreadyExistsException;
+import urfu.cake.shop.user.profile.metrics.UserProfileMetrics;
 import urfu.cake.shop.user.profile.repository.UserAddressesRepository;
 import urfu.cake.shop.user.profile.repository.UserProfileRepository;
 
@@ -46,7 +48,8 @@ class UserProfileServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        userProfileService = new UserProfileServiceImpl(userProfileRepository, userAddressesRepository);
+        userProfileService = new UserProfileServiceImpl(userProfileRepository, userAddressesRepository,
+                new UserProfileMetrics(new SimpleMeterRegistry()));
 
         testUserId = UUID.randomUUID();
         testUserProfile = UserProfilesEntity.builder()

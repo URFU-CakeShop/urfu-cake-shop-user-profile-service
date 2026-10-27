@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import urfu.cake.shop.user.profile.metrics.UserProfileMetrics;
 
 import java.io.IOException;
 import java.util.List;
@@ -23,6 +24,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtService jwtService;
+    private final UserProfileMetrics metrics;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
@@ -37,6 +39,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContext context = SecurityContextHolder.createEmptyContext();
                 context.setAuthentication(authentication);
                 SecurityContextHolder.setContext(context);
+            } else {
+                metrics.recordAuthFailure();
             }
         }
 

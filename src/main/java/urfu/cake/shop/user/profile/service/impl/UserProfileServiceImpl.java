@@ -11,6 +11,7 @@ import urfu.cake.shop.user.profile.entity.AddressesEntity;
 import urfu.cake.shop.user.profile.entity.UserProfilesEntity;
 import urfu.cake.shop.user.profile.exception.UserNotFoundException;
 import urfu.cake.shop.user.profile.exception.UserProfileAlreadyExistsException;
+import urfu.cake.shop.user.profile.metrics.UserProfileMetrics;
 import urfu.cake.shop.user.profile.repository.UserAddressesRepository;
 import urfu.cake.shop.user.profile.repository.UserProfileRepository;
 import urfu.cake.shop.user.profile.service.UserProfilesService;
@@ -29,90 +30,103 @@ public class UserProfileServiceImpl implements UserProfilesService {
 
     private final UserProfileRepository userProfileRepository;
     private final UserAddressesRepository userAddressesRepository;
+    private final UserProfileMetrics metrics;
 
     @Override
     public ApiResponse<UserResponse> getUserProfile(UUID userUUID) {
-        UserProfilesEntity userProfiles = userProfileRepository.findOnlyUserByUserId(userUUID);
+        return metrics.record("get", () -> {
+            UserProfilesEntity userProfiles = userProfileRepository.findOnlyUserByUserId(userUUID);
 
-        if (userProfiles == null) {
-            throw new UserNotFoundException(userUUID);
-        }
+            if (userProfiles == null) {
+                throw new UserNotFoundException(userUUID);
+            }
 
-        return new ApiResponse<>(true, toModel(userProfiles), null);
+            return new ApiResponse<>(true, toModel(userProfiles), null);
+        });
     }
 
     @Override
     public ApiResponse<List<AddressResponse>> getUserAddress(UUID userUUID) {
-        List<AddressesEntity> entity = userAddressesRepository.findAllByUserProfiles_UserId(userUUID);
+        return metrics.record("get_addresses", () -> {
+            List<AddressesEntity> entity = userAddressesRepository.findAllByUserProfiles_UserId(userUUID);
 
-        if (entity == null || entity.isEmpty()) {
-            return new ApiResponse<>(true, List.of(), null);
-        }
+            if (entity == null || entity.isEmpty()) {
+                return new ApiResponse<>(true, List.of(), null);
+            }
 
-        return new ApiResponse<>(true, entity.stream()
-                .map(this::toModel)
-                .toList(), null);
+            return new ApiResponse<>(true, entity.stream()
+                    .map(this::toModel)
+                    .toList(), null);
+        });
     }
 
     @Override
     public ApiResponse<FullUserProfileResponse> getFullUserProfile(UUID userUUID) {
-        UserProfilesEntity userProfiles = userProfileRepository.findByUserId(userUUID);
+        return metrics.record("get_full", () -> {
+            UserProfilesEntity userProfiles = userProfileRepository.findByUserId(userUUID);
 
-        if (userProfiles == null) {
-            throw new UserNotFoundException(userUUID);
-        }
+            if (userProfiles == null) {
+                throw new UserNotFoundException(userUUID);
+            }
 
-        return new ApiResponse<>(true, toFullModel(userProfiles), null);
+            return new ApiResponse<>(true, toFullModel(userProfiles), null);
+        });
     }
 
     @Override
     @Transactional
     public ApiResponse<FullUserProfileResponse> updateUserProfile(UUID userUUID, UpdateUserRequest body) {
-        UserProfilesEntity entity = userProfileRepository.findByUserId(userUUID);
+        return metrics.record("update", () -> {
+            UserProfilesEntity entity = userProfileRepository.findByUserId(userUUID);
 
-        if (entity == null) {
-            throw new UserNotFoundException(userUUID);
-        }
+            if (entity == null) {
+                throw new UserNotFoundException(userUUID);
+            }
 
-        entity.setFirstName(body.getFirstName());
-        entity.setLastName(body.getLastName());
-        entity.setPhone(body.getPhone());
+            entity.setFirstName(body.getFirstName());
+            entity.setLastName(body.getLastName());
+            entity.setPhone(body.getPhone());
 
-        userProfileRepository.save(entity);
+            userProfileRepository.save(entity);
 
-        return new ApiResponse<>(true, toFullModel(entity), null);
+            return new ApiResponse<>(true, toFullModel(entity), null);
+        });
     }
 
     @Override
     @Transactional
     public ApiResponse<FullUserProfileResponse> createUserProfile(UUID userUUID, CreateUserRequest body) {
-        if (userProfileRepository.findByUserId(userUUID) != null) {
-            throw new UserProfileAlreadyExistsException(userUUID);
-        }
+        return metrics.record("create", () -> {
+            if (userProfileRepository.findByUserId(userUUID) != null) {
+                throw new UserProfileAlreadyExistsException(userUUID);
+            }
 
-        UserProfilesEntity entity = UserProfilesEntity.builder()
-                .userId(userUUID)
-                .firstName(body.getFirstName())
-                .lastName(body.getLastName())
-                .phone(body.getPhone())
-                .build();
+            UserProfilesEntity entity = UserProfilesEntity.builder()
+                    .userId(userUUID)
+                    .firstName(body.getFirstName())
+                    .lastName(body.getLastName())
+                    .phone(body.getPhone())
+                    .build();
 
-        userProfileRepository.save(entity);
+            userProfileRepository.save(entity);
 
-        return new ApiResponse<>(true, toFullModel(entity), null);
+            return new ApiResponse<>(true, toFullModel(entity), null);
+        });
     }
 
     @Override
     @Transactional
     public ApiResponse<Boolean> deleteUserProfile(UUID userUUID) {
-        UserProfilesEntity entity = userProfileRepository.findByUserId(userUUID);
+        return metrics.record("delete", () -> {
+            UserProfilesEntity entity = userProfileRepository.findByUserId(userUUID);
 
-        if (entity == null) {
-            throw new UserNotFoundException(userUUID);
-        }
+            if (entity == null) {
+                throw new UserNotFoundException(userUUID);
+            }
 
-        userProfileRepository.delete(entity);
-        return new ApiResponse<>(true, true, null);
+            userProfileRepository.delete(entity);
+            return new ApiResponse<>(true, true, null);
+        });
     }
 
 
